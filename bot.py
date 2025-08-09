@@ -8,7 +8,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, Application, 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
-WAITING_FOR_TEXT = range(1)
+WAITING_FOR_TEXT, AFTER_GENERATE = range(2)
 
 #qr generte function
 def generate_qr_code(input_text):
@@ -27,7 +27,7 @@ async def generate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
-    await update.message.reply_text(f"Generating QR code for: {user_text}...")
+    await update.message.reply_text(f"Generating QR code for:\n {user_text}...")
 
     qr_filename = generate_qr_code(user_text)
 
@@ -35,7 +35,11 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(photo)
     
     os.remove(qr_filename)
+    await update.message.reply_text("QR code generation complete. If you want to generate again, use /generate.")
     return ConversationHandler.END
+
+async def after_generate_respond(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("QR code generation complete. If you want to generate again, use /generate.")
 
 #     #Take the confirmation
 #     user_confirmation = update.message.text.lower()
@@ -46,20 +50,23 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #     else:
 #         await update.message.reply_text("Please reply with 'yes' or 'no'.")
 
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("QR code generation cancelled. if you want to start over, use /generate.")
+    return ConversationHandler.END
+
 
 if __name__ == "__main__":
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    #app.add_handler(CommandHandler("generate", generate))
-    #app.add_handler(conversation_handler)
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("generate", generate)],
         states={
             WAITING_FOR_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text)],
+            AFTER_GENERATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, after_generate_respond)],
         },
-        fallbacks=[]
+        fallbacks=[CommandHandler("cancel", cancel)],
     )
 
     app.add_handler(conv_handler)
