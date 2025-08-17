@@ -40,15 +40,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def after_generate_respond(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("QR code generation complete. If you want to generate again, use /generate.")
-
-#     #Take the confirmation
-#     user_confirmation = update.message.text.lower()
-#     if user_confirmation == 'yes':
-#         await update.message.reply_text("QR code is generating...")
-#     elif user_confirmation == 'no':
-#         await update.message.reply_text("QR code generation cancelled.")
-#     else:
-#         await update.message.reply_text("Please reply with 'yes' or 'no'.")
+    
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("QR code generation cancelled. if you want to start over, use /generate.")
